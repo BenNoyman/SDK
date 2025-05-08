@@ -32,7 +32,7 @@
             android:layout_height="wrap_content"
             android:hint="Password"
             android:inputType="textPassword"
-            android:layout_marginBottom="8dp"/>
+            android:layout_marginBottom="16dp"/>
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -57,11 +57,11 @@
                 android:layout_marginStart="8dp"/>
         </LinearLayout>
 
-        <!-- Code Scanning Section -->
+        <!-- Code Input Section -->
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Code Scanning"
+            android:text="Code to Scan"
             android:textSize="18sp"
             android:textStyle="bold"
             android:layout_marginBottom="8dp"/>
@@ -74,14 +74,33 @@
             android:inputType="textMultiLine"
             android:minLines="5"
             android:gravity="top|start"
-            android:layout_marginBottom="8dp"/>
+            android:layout_marginBottom="16dp"/>
 
-        <Button
-            android:id="@+id/scan_btn"
+        <!-- Action Buttons -->
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Scan Code"
-            android:layout_marginBottom="16dp"/>
+            android:orientation="horizontal"
+            android:layout_marginBottom="16dp">
+
+            <Button
+                android:id="@+id/scan_btn"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Scan Code"
+                android:enabled="false"
+                android:layout_marginEnd="8dp"/>
+
+            <Button
+                android:id="@+id/history_btn"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="View History"
+                android:enabled="false"
+                android:layout_marginStart="8dp"/>
+        </LinearLayout>
 
         <!-- Results Section -->
         <TextView
@@ -98,7 +117,9 @@
             android:layout_height="wrap_content"
             android:background="@android:color/white"
             android:padding="8dp"
-            android:textSize="14sp"/>
+            android:textSize="14sp"
+            android:minLines="10"
+            android:gravity="top|start"/>
 
     </LinearLayout>
 </ScrollView> 
