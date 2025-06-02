@@ -8,19 +8,23 @@ const LoginPage: React.FC = () => {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const { login, isAuthenticated } = useAuth();
+  const { login, isAuthenticated, user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
   // Get the intended destination from the URL
   const from = location.state?.from?.pathname || '/dashboard';
 
-  // If already authenticated, redirect to dashboard
+  // If already authenticated, redirect to the correct dashboard
   useEffect(() => {
-    if (isAuthenticated) {
-      navigate(from, { replace: true });
+    if (isAuthenticated && user) {
+      if (user.isAdmin) {
+        navigate('/dashboard', { replace: true });
+      } else {
+        navigate('/user-dashboard', { replace: true });
+      }
     }
-  }, [isAuthenticated, navigate, from]);
+  }, [isAuthenticated, user, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -29,7 +33,7 @@ const LoginPage: React.FC = () => {
     
     try {
       await login(username, password);
-      navigate(from, { replace: true });
+      // Navigation will be handled by useEffect
     } catch (err) {
       setError('Invalid username or password');
     } finally {

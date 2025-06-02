@@ -4,6 +4,7 @@ import api from '../api/api';
 import { Scan } from '../types';
 import Table from '../components/Table';
 import { Search, Filter } from 'lucide-react';
+import { useAuth } from '../contexts/AuthContext';
 
 const uniqueLanguages = (scans: Scan[]) => {
   const langs = new Set<string>();
@@ -28,22 +29,25 @@ const ScanHistory: React.FC = () => {
     maxFindings: ''
   });
   const navigate = useNavigate();
+  const { user } = useAuth();
 
   useEffect(() => {
     const fetchScans = async () => {
       try {
-        const response = await api.get('/admin/scans');
-        setScans(response.data.scans || []);
-        setFilteredScans(response.data.scans || []);
+        const endpoint = user?.isAdmin ? '/admin/scans' : '/scans';
+        const response = await api.get(endpoint);
+        // For /scans, the data is in response.data.scans
+        const scansData = response.data.scans || [];
+        setScans(scansData);
+        setFilteredScans(scansData);
         setLoading(false);
       } catch (err) {
         setError('Failed to fetch scan data');
         setLoading(false);
       }
     };
-
     fetchScans();
-  }, []);
+  }, [user]);
 
   // Filter scans based on search term and filter options
   useEffect(() => {

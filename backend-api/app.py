@@ -90,7 +90,7 @@ def internal_error(error):
 
 # Authentication Endpoints
 @app.route('/api/auth/register', methods=['POST'])
-@limiter.limit("5 per minute")
+@limiter.limit("50 per minute")
 def register():
     """Register a new user and return an access token"""
     try:
@@ -108,6 +108,7 @@ def register():
         access_token = generate_short_token()
             
         # Create user document
+        admin_username = 'sdkcreator'  # Change this to your preferred admin username
         user = {
             'username': data['username'],
             'password': data['password'],  # In production, this should be hashed
@@ -115,7 +116,8 @@ def register():
             'last_login': None,
             'scan_count': 0,
             'scans': [],
-            'token': access_token
+            'token': access_token,
+            'isAdmin': data['username'].lower() == admin_username.lower()
         }
         
         # Insert user
@@ -124,7 +126,8 @@ def register():
         return jsonify({
             'message': 'User registered successfully',
             'user_id': str(result.inserted_id),
-            'access_token': access_token
+            'access_token': access_token,
+            'isAdmin': user['isAdmin']
         }), 201
         
     except Exception as e:
@@ -133,7 +136,7 @@ def register():
 
 
 @app.route('/api/auth/login', methods=['POST'])
-@limiter.limit("1000 per minute")
+@limiter.limit("10000 per minute")
 def login():
     try:
         data = request.get_json()
@@ -153,7 +156,8 @@ def login():
         return jsonify({
             'message': 'Login successful',
             'user_id': str(user['_id']),
-            'access_token': access_token
+            'access_token': access_token,
+            'isAdmin': user.get('isAdmin', False)
         }), 200
 
     except Exception as e:
@@ -168,11 +172,8 @@ def perform_scan():
     try:
         data = request.get_json()
         auth_header = request.headers.get('Authorization')
-        
-        if not auth_header:
-            return jsonify({'error': 'No authorization header'}), 401
-            
-        user = validate_token(auth_header)
+        token = auth_header.replace('Bearer ', '').strip() if auth_header else None
+        user = validate_token(token)
         if not user:
             return jsonify({'error': 'Invalid token'}), 401
 
@@ -221,11 +222,8 @@ def perform_scan():
 def get_scans():
     try:
         auth_header = request.headers.get('Authorization')
-        
-        if not auth_header:
-            return jsonify({'error': 'No authorization header'}), 401
-            
-        user = validate_token(auth_header)
+        token = auth_header.replace('Bearer ', '').strip() if auth_header else None
+        user = validate_token(token)
         if not user:
             return jsonify({'error': 'Invalid token'}), 401
 
@@ -273,10 +271,8 @@ def get_scans():
 def get_scan_details(scan_id):
     try:
         auth_header = request.headers.get('Authorization')
-        if not auth_header:
-            return jsonify({'error': 'No authorization header'}), 401
-
-        user = validate_token(auth_header)
+        token = auth_header.replace('Bearer ', '').strip() if auth_header else None
+        user = validate_token(token)
         if not user:
             return jsonify({'error': 'Invalid token'}), 401
 
@@ -298,10 +294,8 @@ def get_scan_details(scan_id):
 def delete_scan(scan_id):
     try:
         auth_header = request.headers.get('Authorization')
-        if not auth_header:
-            return jsonify({'error': 'No authorization header'}), 401
-
-        user = validate_token(auth_header)
+        token = auth_header.replace('Bearer ', '').strip() if auth_header else None
+        user = validate_token(token)
         if not user:
             return jsonify({'error': 'Invalid token'}), 401
 

@@ -4,7 +4,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { LogOut, Shield } from 'lucide-react';
 
 const Navbar: React.FC = () => {
-  const { isAuthenticated, logout } = useAuth();
+  const { isAuthenticated, logout, user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -24,14 +24,14 @@ const Navbar: React.FC = () => {
   return (
     <nav className="bg-indigo-700 text-white shadow-md">
       <div className="container mx-auto px-4 py-3 flex flex-col sm:flex-row justify-between items-center">
-        <Link to="/dashboard" className="flex items-center space-x-2 font-bold text-lg mb-3 sm:mb-0">
+        <Link to={user?.isAdmin ? "/dashboard" : "/user-dashboard"} className="flex items-center space-x-2 font-bold text-lg mb-3 sm:mb-0">
           <Shield size={24} />
           <span>VulnScan Portal</span>
         </Link>
         <div className="flex items-center space-x-6">
           <Link 
-            to="/dashboard" 
-            className={`transition-colors ${isActive('/dashboard') 
+            to={user?.isAdmin ? "/dashboard" : "/user-dashboard"}
+            className={`transition-colors ${isActive(user?.isAdmin ? '/dashboard' : '/user-dashboard') 
               ? 'text-white font-medium' 
               : 'text-indigo-200 hover:text-white'}`}
           >

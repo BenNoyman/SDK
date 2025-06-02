@@ -5,6 +5,7 @@ import LoginPage from './pages/LoginPage';
 import Dashboard from './pages/Dashboard';
 import ScanHistory from './pages/ScanHistory';
 import ScanDetails from './pages/ScanDetails';
+import UserDashboard from './pages/UserDashboard';
 import Navbar from './components/Navbar';
 
 // Protected route component
@@ -57,6 +58,14 @@ const App: React.FC = () => {
                 element={
                   <ProtectedRoute>
                     <ScanDetails />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/user-dashboard"
+                element={
+                  <ProtectedRoute>
+                    <UserDashboard />
                   </ProtectedRoute>
                 }
               />

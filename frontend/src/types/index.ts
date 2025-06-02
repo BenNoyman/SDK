@@ -8,6 +8,7 @@ export interface User {
   scanCount: number;
   apiToken: string;
   status: 'active' | 'suspended';
+  isAdmin?: boolean;
 }
 
 // SDK Version interface
