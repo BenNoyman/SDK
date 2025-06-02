@@ -2,8 +2,7 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
-from pymongo import MongoClient, DESCENDING
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from bson import ObjectId
 from scanner import scan_code
 from dotenv import load_dotenv
@@ -14,9 +13,15 @@ from marshmallow import Schema, fields, validate, ValidationError
 import random
 import string
 from collections import defaultdict
+from database import get_collections
 
 # Load environment variables
 load_dotenv()
+
+# Get database collections
+collections = get_collections()
+users_collection = collections['users']
+scans_collection = collections['scans']
 
 def generate_short_token():
     """Generate a 4-character token using uppercase letters and numbers"""
@@ -41,9 +46,9 @@ file_handler = RotatingFileHandler('logs/vulnerability_scanner.log', maxBytes=10
 file_handler.setFormatter(logging.Formatter(
     '%(asctime)s %(levelname)s: %(message)s [in %(pathname)s:%(lineno)d]'
 ))
-file_handler.setLevel(logging.INFO)
+file_handler.setLevel(logging.ERROR)
 app.logger.addHandler(file_handler)
-app.logger.setLevel(logging.INFO)
+app.logger.setLevel(logging.ERROR)
 app.logger.info('Vulnerability Scanner startup')
 
 # Rate Limiter
@@ -52,12 +57,6 @@ limiter = Limiter(
     key_func=get_remote_address,
     default_limits=["200 per day", "50 per hour"]
 )
-
-# MongoDB Connection
-client = MongoClient(os.getenv('MONGO_URI'))
-db = client[os.getenv('DB_NAME')]
-users_collection = db['users']
-scans_collection = db['scans']
 
 # Input Validation Schemas
 class ScanRequestSchema(Schema):
@@ -474,18 +473,28 @@ def admin_stats():
                     scans_this_week += 1
 
     # --- Weekly Scans (bar graph) ---
-    week_days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
     today = datetime.utcnow()
     start_of_week = today - timedelta(days=today.weekday())
+    start_of_week = start_of_week.replace(hour=0, minute=0, second=0, microsecond=0)
+    week_days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
     daily_counts = {i: 0 for i in range(7)}  # 0=Mon, 6=Sun
     for user in users:
         for scan in user.get('scans', []):
             ts = scan.get('timestamp')
             if ts:
-                scan_date = ts if isinstance(ts, datetime) else datetime.fromisoformat(str(ts))
+                if isinstance(ts, datetime):
+                    if ts.tzinfo is not None:
+                        scan_date = ts.astimezone(timezone.utc).replace(tzinfo=None)
+                    else:
+                        scan_date = ts
+                else:
+                    scan_date = datetime.fromisoformat(str(ts))
+                    if scan_date.tzinfo is not None:
+                        scan_date = scan_date.astimezone(timezone.utc).replace(tzinfo=None)
                 if scan_date >= start_of_week:
-                    day_idx = (scan_date.weekday())
+                    day_idx = scan_date.weekday()
                     daily_counts[day_idx] += 1
+
     weeklyScans = [
         {"day": week_days[i], "count": daily_counts[i]} for i in range(7)
     ]
@@ -516,6 +525,9 @@ def admin_get_scan_details(scan_id):
             # Always provide findings at the top level
             if 'findings' not in scan or not isinstance(scan['findings'], list):
                 scan['findings'] = scan.get('results', {}).get('findings', [])
+            # Ensure code_snippet is included
+            if 'code_snippet' not in scan:
+                scan['code_snippet'] = scan.get('code_snippet', '')
             return jsonify(scan), 200
     return jsonify({'error': 'Scan not found'}), 404
 

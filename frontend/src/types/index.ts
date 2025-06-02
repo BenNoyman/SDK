@@ -44,6 +44,7 @@ export interface Scan {
   timestamp?: string;
   language: string;
   findings: Finding[];
+  code_snippet?: string;
 }
 
 // Finding interface

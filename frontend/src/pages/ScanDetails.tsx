@@ -31,7 +31,7 @@ const ScanDetails: React.FC = () => {
         
         // Sort findings by severity
         const sorted = [...response.data.findings].sort((a, b) => 
-          severityOrder[a.severity] - severityOrder[b.severity]
+          severityOrder[(a.severity as keyof typeof severityOrder)] - severityOrder[(b.severity as keyof typeof severityOrder)]
         );
         setSortedFindings(sorted);
         
@@ -175,6 +175,16 @@ const ScanDetails: React.FC = () => {
           </div>
         </div>
         
+        {/* Code Snippet Section */}
+        {scan.code_snippet && (
+          <div className="mt-8">
+            <h3 className="text-sm font-medium text-gray-500 mb-2">Code Snippet</h3>
+            <pre className="bg-gray-900 text-gray-100 rounded-lg p-4 overflow-x-auto max-h-64 text-sm">
+              <code>{scan.code_snippet}</code>
+            </pre>
+          </div>
+        )}
+
         {severityCounts && (
           <div className="mt-6 pt-6 border-t border-gray-200">
             <h3 className="text-sm font-medium text-gray-500 mb-3">Severity Breakdown</h3>

@@ -178,8 +178,8 @@ const Dashboard: React.FC = () => {
 
         <div className="bg-white rounded-lg shadow-md p-6">
           <h2 className="text-xl font-semibold mb-6">Recent Activity</h2>
-          <div className="space-y-4">
-            {stats.recentActivity.map((activity, index) => (
+          <div className="space-y-4 max-h-80 overflow-y-auto">
+            {stats.recentActivity.slice(0, 5).map((activity, index) => (
               <div key={index} className="flex items-start space-x-3 p-3 hover:bg-gray-50 rounded-lg">
                 {activity.type === 'scan' && <Shield size={20} className="text-indigo-600" />}
                 {activity.type === 'user_created' && <Users size={20} className="text-blue-600" />}
