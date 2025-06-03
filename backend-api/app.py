@@ -37,7 +37,7 @@ def validate_token(token):
 
 app = Flask(__name__)
 # Enable CORS for all routes
-CORS(app, origins=["http://localhost:5173"], supports_credentials=True, allow_headers="*", methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"])
+CORS(app, origins=["http://localhost:5173"], supports_credentials=True, allow_headers=["Content-Type", "Authorization"], methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"])
 
 # Configure logging
 if not os.path.exists('logs'):

@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import api from '../api/api';
 import Card from '../components/Card';
 import Chart from '../components/Chart';
-import { Shield, AlertTriangle, BarChart, Clock, Copy } from 'lucide-react';
+import { Shield, AlertTriangle, AlertCircle, BarChart, Clock, Copy } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 
 interface Finding {
@@ -67,6 +67,17 @@ const UserDashboard: React.FC = () => {
     return acc;
   }, {} as Record<string, number>);
 
+  // Debug logging to see what's in the data
+  console.log('Scans data:', scans);
+  console.log('Findings by severity:', findingsBySeverity);
+  
+  // Also log individual findings to see what severity values we're getting
+  scans.forEach((scan, index) => {
+    if (scan.results?.findings?.length > 0) {
+      console.log(`Scan ${index} findings:`, scan.results.findings.map(f => ({ severity: f.severity, category: f.category })));
+    }
+  });
+
   // By type/category
   const findingsByCategory = scans.reduce((acc, scan) => {
     (scan.results?.findings || []).forEach((finding: Finding) => {
@@ -127,7 +138,7 @@ const UserDashboard: React.FC = () => {
           </div>
         </div>
       )}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
         <Card
           title="Total Scans"
           value={scans.length}
@@ -139,6 +150,12 @@ const UserDashboard: React.FC = () => {
           value={findingsBySeverity['critical'] || 0}
           icon={<AlertTriangle size={24} />}
           className="border-l-4 border-red-500"
+        />
+        <Card
+          title="High Findings"
+          value={findingsBySeverity['high'] || 0}
+          icon={<AlertCircle size={24} />}
+          className="border-l-4 border-yellow-500"
         />
         <Card
           title="Medium Findings"

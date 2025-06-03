@@ -5,7 +5,7 @@ import api from '../api/api';
 import { UsageStats } from '../types';
 import Card from '../components/Card';
 import Chart from '../components/Chart';
-import { Users, Shield, BarChart, AlertTriangle, Clock, Code, Activity, Timer, BarChart3 } from 'lucide-react';
+import { Users, Shield, BarChart, AlertTriangle, AlertCircle, Clock, Code, Activity, Timer, BarChart3 } from 'lucide-react';
 
 const Dashboard: React.FC = () => {
   const [stats, setStats] = useState<UsageStats | null>(null);
@@ -18,6 +18,7 @@ const Dashboard: React.FC = () => {
     const fetchStats = async () => {
       try {
         const response = await api.get('/admin/stats');
+        console.log('Admin stats response:', response.data);
         setStats(response.data);
         setLoading(false);
       } catch (err) {
@@ -67,7 +68,7 @@ const Dashboard: React.FC = () => {
         </div>
       </div>
       
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
         <Card
           title="Total Users"
           value={stats.totalUsers}
@@ -85,6 +86,12 @@ const Dashboard: React.FC = () => {
           value={stats.findings.critical}
           icon={<AlertTriangle size={24} />}
           className="border-l-4 border-red-500"
+        />
+        <Card
+          title="High Findings"
+          value={stats.findings.high}
+          icon={<AlertCircle size={24} />}
+          className="border-l-4 border-yellow-500"
         />
         <Card
           title="Medium Findings"

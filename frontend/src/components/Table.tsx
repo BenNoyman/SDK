@@ -16,6 +16,9 @@ const Table: React.FC<TableProps> = ({ scans, onRowClick }) => {
               Scan ID
             </th>
             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              Username
+            </th>
+            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
               Date
             </th>
             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -37,6 +40,9 @@ const Table: React.FC<TableProps> = ({ scans, onRowClick }) => {
                 <div className="text-sm text-gray-900">{scan.id}</div>
               </td>
               <td className="px-6 py-4 whitespace-nowrap">
+                <div className="text-sm text-gray-900">{(scan as any).user || scan.username || '-'}</div>
+              </td>
+              <td className="px-6 py-4 whitespace-nowrap">
                 <div className="text-sm text-gray-900">
                   {scan.date ? new Date(scan.date).toLocaleDateString() : '-'}
                 </div>
@@ -51,7 +57,7 @@ const Table: React.FC<TableProps> = ({ scans, onRowClick }) => {
           ))}
           {scans.length === 0 && (
             <tr>
-              <td colSpan={4} className="px-6 py-4 text-center text-sm text-gray-500">
+              <td colSpan={5} className="px-6 py-4 text-center text-sm text-gray-500">
                 No scans found
               </td>
             </tr>

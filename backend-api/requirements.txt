@@ -8,3 +8,4 @@ flask-cors==3.0.10
 flask-limiter==2.4.0
 flask-jwt-extended==4.5.3
 marshmallow==3.13.0
+semgrep==1.123.0

@@ -54,10 +54,19 @@ const ScanHistory: React.FC = () => {
     let filtered = scans;
     const term = searchTerm.toLowerCase();
     if (term) {
-      filtered = filtered.filter(scan =>
-        (scan.id && scan.id.toLowerCase().includes(term)) ||
-        ((scan as any).user && (scan as any).user.toLowerCase().includes(term))
-      );
+      filtered = filtered.filter(scan => {
+        // Get the scan ID (could be _id or id)
+        const scanId = (scan.id || (scan as any)._id || '').toLowerCase();
+        // Get the username (could be user or username)
+        const username = ((scan as any).user || (scan as any).username || '').toLowerCase();
+        // Get the language
+        const language = (scan.language || '').toLowerCase();
+        
+        // Search in scan ID, username, or language
+        return scanId.includes(term) || 
+               username.includes(term) || 
+               language.includes(term);
+      });
     }
     // Language filter
     if (filterOptions.language) {
@@ -128,7 +137,7 @@ const ScanHistory: React.FC = () => {
             type="text"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            placeholder="Search by ID or Username..."
+            placeholder="Search by Scan ID, Username, or Language..."
             className="pl-10 w-full py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
           />
         </div>
