@@ -36,13 +36,12 @@ const ScanHistory: React.FC = () => {
       try {
         const endpoint = user?.isAdmin ? '/admin/scans' : '/scans';
         const response = await api.get(endpoint);
-        // For /scans, the data is in response.data.scans
         const scansData = response.data.scans || [];
         setScans(scansData);
-        setFilteredScans(scansData);
         setLoading(false);
       } catch (err) {
         setError('Failed to fetch scan data');
+        console.error('[fetchScans] Error during fetch:', err);
         setLoading(false);
       }
     };
@@ -52,17 +51,13 @@ const ScanHistory: React.FC = () => {
   // Filter scans based on search term and filter options
   useEffect(() => {
     let filtered = scans;
+
     const term = searchTerm.toLowerCase();
     if (term) {
       filtered = filtered.filter(scan => {
-        // Get the scan ID (could be _id or id)
         const scanId = (scan.id || (scan as any)._id || '').toLowerCase();
-        // Get the username (could be user or username)
         const username = ((scan as any).user || (scan as any).username || '').toLowerCase();
-        // Get the language
         const language = (scan.language || '').toLowerCase();
-        
-        // Search in scan ID, username, or language
         return scanId.includes(term) || 
                username.includes(term) || 
                language.includes(term);
@@ -92,8 +87,22 @@ const ScanHistory: React.FC = () => {
     if (filterOptions.maxFindings) {
       filtered = filtered.filter(scan => (Array.isArray(scan.findings) ? scan.findings.length : 0) <= Number(filterOptions.maxFindings));
     }
+
+    // Sort by date in descending order (newest first)
+    filtered = filtered.sort((a, b) => {
+      const getDateString = (scan: any) => {
+        return scan.date || scan.timestamp || (scan.results && scan.results.timestamp) || '';
+      };
+      const dateStringA = getDateString(a);
+      const dateStringB = getDateString(b);
+      const dateA = new Date(dateStringA);
+      const dateB = new Date(dateStringB);
+      const comparison = dateB.getTime() - dateA.getTime();
+      return comparison;
+    });
+
     setFilteredScans(filtered);
-  }, [searchTerm, scans, filterOptions]);
+  }, [searchTerm, scans, filterOptions, user]);
 
   const handleRowClick = (id: string) => {
     navigate(`/scans/${id}`);
@@ -250,14 +259,14 @@ const ScanHistory: React.FC = () => {
                 : [];
             const date = scan.date || (scan as any).timestamp || '';
             const language = scan.language || 'Unknown';
-            const user = (scan as any).user || (scan as any).username || '-';
+            const username = (scan as any).user || (scan as any).username || '-';
             return {
               ...scan,
               id,
               findings,
               date,
               language,
-              user
+              username
             };
           })}
           onRowClick={handleRowClick}

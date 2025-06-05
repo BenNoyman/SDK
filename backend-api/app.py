@@ -183,6 +183,20 @@ def perform_scan():
         language = data.get('language', 'python')
         scan_results = scan_code(data['code'], language)
 
+        # strip out the 'code' field on each finding if requested
+        include_code_param = request.args.get('include_code', 'true')
+        include_code = include_code_param.lower() != 'false'
+        app.logger.info(f"Raw include_code parameter: '{include_code_param}', parsed as: {include_code}")
+        
+        if not include_code:
+            app.logger.info(f"Removing code fields from {len(scan_results.get('findings', []))} findings")
+            for f in scan_results.get('findings', []):
+                if 'code' in f:
+                    app.logger.info(f"Removing code field: {f['code'][:50]}...")
+                    f.pop('code', None)
+        else:
+            app.logger.info("Keeping code fields in response")
+
         scan_id = ObjectId()
 
         scan_doc = {
@@ -230,10 +244,15 @@ def get_scans():
         if 'scans' not in user:
             return jsonify({'scans': []}), 200
 
+        include_code = request.args.get('include_code', 'true').lower() != 'false'
+
         scans = []
         for scan in user.get('scans', []):
             scan_copy = scan.copy()
             scan_copy['_id'] = str(scan_copy['_id'])
+            
+            if not include_code:
+                scan_copy.pop('code_snippet', None)  # remove top-level code
 
             # Handle top-level timestamp
             ts = scan_copy.get('timestamp')
@@ -242,7 +261,7 @@ def get_scans():
             else:
                 scan_copy['timestamp'] = str(ts) if ts else None
 
-            # Handle nested results.timestamp
+            # Handle nested results.timestamp and remove code from findings
             results = scan_copy.get('results')
             if isinstance(results, dict):
                 nested_ts = results.get('timestamp')
@@ -250,6 +269,11 @@ def get_scans():
                     results['timestamp'] = nested_ts.isoformat()
                 elif nested_ts:
                     results['timestamp'] = str(nested_ts)
+                
+                # remove per-finding code if requested
+                if not include_code:
+                    for f in results.get('findings', []):
+                        f.pop('code', None)
 
             scans.append(scan_copy)
 
@@ -283,9 +307,23 @@ def get_scan_details(scan_id):
         if not scan:
             return jsonify({'error': 'Scan not found'}), 404
 
-        scan['_id'] = str(scan['_id'])
-        scan['timestamp'] = scan['timestamp'].isoformat()
-        return jsonify(scan), 200
+        include_code = request.args.get('include_code', 'true').lower() != 'false'
+
+        scan_copy = scan.copy()
+        scan_copy['_id'] = str(scan_copy['_id'])
+        
+        if not include_code:
+            scan_copy.pop('code_snippet', None)  # remove top-level code
+        
+        scan_copy['timestamp'] = scan_copy['timestamp'].isoformat()
+        
+        # remove per-finding code if requested
+        if not include_code:
+            results = scan_copy.get('results', {})
+            for f in results.get('findings', []):
+                f.pop('code', None)
+            
+        return jsonify(scan_copy), 200
     except Exception as e:
         app.logger.error(f"Get scan details error: {str(e)}")
         return jsonify({'error': 'Failed to retrieve scan details'}), 500
@@ -329,6 +367,23 @@ def admin_get_scans():
             scan_copy = scan.copy()
             scan_copy['_id'] = str(scan_copy['_id'])
             scan_copy['user'] = user['username']
+            
+            # Handle top-level timestamp (same as regular user endpoint)
+            ts = scan_copy.get('timestamp')
+            if hasattr(ts, 'isoformat'):
+                scan_copy['timestamp'] = ts.isoformat()
+            else:
+                scan_copy['timestamp'] = str(ts) if ts else None
+
+            # Handle nested results.timestamp
+            results = scan_copy.get('results')
+            if isinstance(results, dict):
+                nested_ts = results.get('timestamp')
+                if hasattr(nested_ts, 'isoformat'):
+                    results['timestamp'] = nested_ts.isoformat()
+                elif nested_ts:
+                    results['timestamp'] = str(nested_ts)
+            
             scans.append(scan_copy)
     return jsonify({'scans': scans})
 
